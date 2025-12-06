@@ -1,0 +1,22 @@
+---
+- name: Patch Linux Servers
+  hosts: linux_servers
+  become: yes
+
+  tasks:
+
+  - name: Run OS updates
+    yum:
+      name: "*"
+      state: latest
+
+  - name: Check if reboot is required
+    register: needs_reboot
+    stat:
+      path: /var/run/reboot-required
+
+  - name: Reboot server if needed
+    reboot:
+      msg: "Reboot initiated by Ansible after patching"
+      pre_reboot_delay: 10
+    when: needs_reboot.stat.exists
