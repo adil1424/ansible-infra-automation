@@ -1,0 +1,41 @@
+---
+- name: Prepare Linux node for Kubernetes / OpenShift
+  hosts: linux_servers
+  become: yes
+
+  tasks:
+
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
+
+  - name: Remove swap entry from /etc/fstab
+    replace:
+      path: /etc/fstab
+      regexp: '(^.*swap.*$)'
+      replace: '# \1'
+
+  - name: Install required packages
+    yum:
+      name:
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+      state: present
+
+  - name: Set sysctl params for Kubernetes networking
+    sysctl:
+      name: net.bridge.bridge-nf-call-iptables
+      value: 1
+      state: present
+      reload: yes
+
+  - name: Ensure br_netfilter module is loaded
+    modprobe:
+      name: br_netfilter
+
+  - name: Install container runtime (containerd)
+    yum:
+      name:
+        - containerd.io
+      state: present
