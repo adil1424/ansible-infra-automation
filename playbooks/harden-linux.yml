@@ -1,0 +1,29 @@
+---
+- name: Harden Linux Server
+  hosts: linux_servers
+  become: yes
+
+  tasks:
+
+  - name: Disable root SSH login
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^PermitRootLogin'
+      line: 'PermitRootLogin no'
+
+  - name: Enforce password complexity
+    lineinfile:
+      path: /etc/security/pwquality.conf
+      regexp: '^minlen'
+      line: 'minlen = 10'
+
+  - name: Ensure firewalld is installed and running
+    yum:
+      name: firewalld
+      state: present
+    
+  - name: Start and enable firewalld
+    service:
+      name: firewalld
+      state: started
+      enabled: yes
